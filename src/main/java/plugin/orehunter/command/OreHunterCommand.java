@@ -42,8 +42,12 @@ public class OreHunterCommand extends BaseCommand implements Listener {
   public static final int MAX_FOOD_LEVEL = 20;
   public static final int COUNTDOWN_TIME = 5;
   public static final int GAME_TIME = 20;
+  public static final int STAY_TIME = 20;
+  public static final int STAY_LONG_TIME = 140;
+  public static final int FADE_OUT_TIME = 20;
   public static final int MAX_SPAWN_ATTEMPTS = 30;
   public static final int SPAWN_COUNT = 2;
+
 
 
   private final Main main;
@@ -125,11 +129,12 @@ public class OreHunterCommand extends BaseCommand implements Listener {
     Block brokenBlock = e.getBlock();
     Player player = e.getPlayer();
 
-    //実行中のプレイヤーがいない(ゲーム中ではない)場合は処理しない。
-    if (executingPlayerList.isEmpty())
-      return;
 
-    //鉱石以外のブロックを破壊した場合、地形復元用としてブロック情報を記録します。
+    if (executingPlayerList.isEmpty()){
+      return;
+    }
+
+
     Location brokenLocation = brokenBlock.getLocation();
     if (oreBlockList.stream()
         .noneMatch(ore -> ore.equals(brokenBlock))){
@@ -201,7 +206,7 @@ public class OreHunterCommand extends BaseCommand implements Listener {
     Bukkit.getScheduler().runTaskTimer(main, task -> {
       if (nowExecutingPlayer.getCountdownTime() > 0) {
         player.sendTitle(String.valueOf(nowExecutingPlayer.getCountdownTime()),
-            "鉱石をたくさん採掘し高得点を目指そう！", 0, 20, 0);
+            "鉱石をたくさん採掘し高得点を目指そう！", 0, STAY_TIME, 0);
         nowExecutingPlayer.setCountdownTime(nowExecutingPlayer.getCountdownTime() -1);
         return;
       }
@@ -209,7 +214,7 @@ public class OreHunterCommand extends BaseCommand implements Listener {
 
       if (nowExecutingPlayer.getCountdownTime() == 0) {
         player.sendTitle("START！",
-            "鉱石をたくさん採掘し高得点を目指そう！", 0, 20, 20);
+            "鉱石をたくさん採掘し高得点を目指そう！", 0, STAY_TIME, FADE_OUT_TIME);
         nowExecutingPlayer.setCountdownTime(nowExecutingPlayer.getCountdownTime() - 1);
 
         gamePlay(player, nowExecutingPlayer);
@@ -236,7 +241,7 @@ public class OreHunterCommand extends BaseCommand implements Listener {
 
       if (nowExecutingPlayer.getGameTime() <= COUNTDOWN_TIME) {
         player.sendTitle(String.valueOf(nowExecutingPlayer.getGameTime()),
-            "", 0, 20, 0);
+            "", 0, STAY_TIME, 0);
       }
 
       oreSpawn(player);
@@ -258,7 +263,7 @@ public class OreHunterCommand extends BaseCommand implements Listener {
     task.cancel();
     player.sendTitle("ゲーム終了！",
         nowExecutingPlayer.getPlayerName() + "合計 " + nowExecutingPlayer.getScore() + "点！",
-        0, 140, 20);
+        0, STAY_LONG_TIME, FADE_OUT_TIME);
 
 
     oreBlockList.forEach(oreBlock
@@ -277,7 +282,7 @@ public class OreHunterCommand extends BaseCommand implements Listener {
             ,nowExecutingPlayer.getScore()));
 
     executingPlayerList.clear();
-    }
+  }
 
 
 
@@ -317,8 +322,9 @@ public class OreHunterCommand extends BaseCommand implements Listener {
       Block blockLocation = player.getWorld().getBlockAt(x, y, z);
 
       if (blockLocation.getType().isAir()
-          && blockLocation.getRelative(BlockFace.DOWN).getType().isSolid())
+          && blockLocation.getRelative(BlockFace.DOWN).getType().isSolid()) {
         return blockLocation;
+      }
     }
     return playerLocation.getBlock().getRelative(BlockFace.DOWN,2);
   }
